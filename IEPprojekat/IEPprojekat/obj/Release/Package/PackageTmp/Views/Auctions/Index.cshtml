@@ -1,0 +1,498 @@
+﻿@model PagedList.IPagedList<IEPprojekat.Models.Auction>
+@using PagedList.Mvc;
+<link href="~/Content/PagedList.css" rel="stylesheet" type="text/css" />
+@using Microsoft.AspNet.Identity
+@{
+    ViewBag.Title = "Index";
+}
+
+
+<style>
+    td {
+        align-content: center;
+    }
+</style>
+
+<h2>List of existing auctions</h2>
+<p style="position:absolute;right:5px;top:80px;font-size:26px;font-weight:bold;" id="newAuction">
+    &nbsp;
+</p>
+
+@using (Html.BeginForm("Search", "Auctions", FormMethod.Post, new { enctype = "multipart/form-data" }))
+{
+    @Html.AntiForgeryToken()
+    <table width="100%">
+        <tr style="margin:5px">
+            <td>
+                Name:
+            </td>
+            <td>
+                @if (ViewBag.AuctionName != null)
+                {
+                    <input type="text" name="name" id="name" value="@ViewBag.AuctionName" />
+                }
+                @if (ViewBag.AuctionName == null)
+                {
+                <input type="text" name="name" id="name" />
+                }
+            </td>
+
+
+
+            <td>
+
+                Low price:
+                @if (ViewBag.MinPrice != null)
+                {
+                    <input type="text" id="low" name="minPrice" size="5" value="@ViewBag.MinPrice" />
+                }
+                @if (ViewBag.MinPrice == null)
+                {
+                <input type="text" id="low" name="minPrice" size="5" />
+                }
+
+            </td>
+            <td>
+                High price:
+                @if (ViewBag.MaxPrice != null)
+                {
+                    <input type="text" id="high" name="maxPrice" size="5" value="@ViewBag.MaxPrice" />
+
+                }
+                @if (ViewBag.MaxPrice == null)
+                {
+                <input type="text" id="high" name="maxPrice" size="5" />
+                }
+            </td>
+
+            <td>
+                State:
+            </td>
+            <td>
+                @if (ViewBag.State == null || ViewBag.State == "")
+                {
+                    <select name="state" id="state">
+                        <option value="" selected></option>
+                        <option value="READY">READY</option>
+                        <option value="OPENED">OPENED</option>
+                        <option value="COMPLETED">COMPLETED</option>
+                    </select>
+                }
+                @if (ViewBag.State == "READY")
+                {
+                    <select name="state" id="state">
+                        <option value=""></option>
+                        <option value="READY" selected>READY</option>
+                        <option value="OPENED">OPENED</option>
+                        <option value="COMPLETED">COMPLETED</option>
+                    </select>
+                }
+                @if (ViewBag.State == "OPENED")
+                {
+                    <select name="state" id="state">
+                        <option value=""></option>
+                        <option value="READY">READY</option>
+                        <option value="OPENED" selected>OPENED</option>
+                        <option value="COMPLETED">COMPLETED</option>
+                    </select>
+                }
+                @if (ViewBag.State == "COMPLETED")
+                {
+                    <select name="state" id="state">
+                        <option value=""></option>
+                        <option value="READY">READY</option>
+                        <option value="OPENED">OPENED</option>
+                        <option value="COMPLETED" selected>COMPLETED</option>
+                    </select>
+                }
+            </td>
+
+            <td>
+                <center> <input type="submit" class="btn btn-outline-secondary btn-sm" value="SEARCH" /></center>
+            </td>
+        </tr>
+        <tr>
+            <td>&nbsp;</td>
+            <td>&nbsp;</td>
+            <td style="color:red;">
+
+                @if (ViewBag.ErrorMin != null)
+                {
+                    @ViewBag.ErrorMin;
+                }
+                &nbsp;
+            </td>
+            <td style="color:red;">
+
+                @if (ViewBag.ErrorMax != null)
+                {
+                    @ViewBag.ErrorMax;
+                }
+                &nbsp;
+            </td>
+            <td colspan="2">
+                &nbsp;
+            </td>
+        </tr>
+    </table>
+}
+
+
+
+<p>
+    @if (User.Identity.IsAuthenticated)
+    {
+        @Html.ActionLink("Create new", "Create")
+    }
+</p>
+<p style="position:absolute;right:5px;" id="newAuction">
+    &nbsp;
+</p>
+<p>
+    @if (ViewBag.ErrorBid != null)
+    {
+        @ViewBag.ErrorBid
+    }
+</p>
+
+<div class="container-fluid">
+    <div class="row">
+        @foreach (var item in Model)
+        {
+            if (item.State != "READY" || (User.Identity.IsAuthenticated && User.Identity.GetUserId() == item.IdOwner))
+            {
+                <div class="col-sm-4" style="margin-bottom:15px;">
+                    <div class="card" style="width:90%;">
+                        @{
+                            string imgDataUrl = "";
+                            if (item.Image != null)
+                            {
+                                string imreBase64Data = Convert.ToBase64String(item.Image);
+                                imgDataUrl = string.Format("data:image/png;base64,{0}", imreBase64Data);
+                            }
+                        }
+                        <img src="@imgDataUrl" style="width:100%;height:160px" class="card-img-top" />
+                        <div class="card-body">
+                            <h5 class="card-title" style="align-content:center;"> @Html.DisplayFor(modelItem => item.Name)</h5>
+                            <p class="card-text">
+                                <table style="width:100%">
+                                    <tr style="width:100%">
+                                        <td style="width:100%">
+
+                                            @if (item.State == "READY")
+                                            {
+                                                <span style="width:100%" class="badge badge-pill badge-info">READY</span>
+                                            }
+                                            @{
+
+                                                if (item.State == "OPENED" && DateTime.Compare((DateTime)item.TimeClosing, DateTime.Now) > 0)
+                                                {
+                                                    <div class="badgeInfo">
+                                                        <span style="width:100%" class="badge badge-pill badge-success">OPENED</span>
+                                                    </div>
+                                                }
+                                                else if (item.State == "OPENED")
+                                                {
+                                                    <div class="badgeInfo">
+                                                        <span style="width:100%" class="badge badge-pill badge-danger">COMPLETED</span>
+                                                    </div>
+                                                }
+                                            }
+                                            @if (item.State == "COMPLETED")
+                                            {
+                                                <span style="width:100%" class="badge badge-pill badge-danger">COMPLETED</span>
+                                            }
+
+                                        </td>
+
+                                    </tr>
+                                    <tr>
+                                        <td style="font-size:36px;color:red;font-weight:bold">
+                                            <table>
+                                                <tr>
+                                                    <td>
+                                                        <img src="http://cdn.onlinewebfonts.com/svg/img_304848.png" style="width:40px;height:40px;" />
+                                                    </td>
+                                                    @if (item.State == "OPENED" && DateTime.Compare((DateTime)item.TimeClosing, DateTime.Now) > 0)
+                                                    {
+                                                        <td>
+                                                            @{
+                                                                TimeSpan left = ((DateTime)item.TimeClosing).Subtract(DateTime.Now);
+                                                                int seconds = (int)left.TotalSeconds;
+                                                                int minutes = seconds / 60;
+                                                                seconds = seconds % 60;
+                                                            }
+
+                                                            <div class="timer" id="@item.IdAuction"> @minutes:@seconds </div>
+                                                        </td>
+                                                    }
+                                                    @if (item.State.Equals("OPENED") && DateTime.Compare((DateTime)item.TimeClosing, DateTime.Now) <= 0)
+                                                    {
+                                                        <td>
+                                                            <div class="timer" id="@item.IdAuction">
+                                                                0:0
+                                                            </div>
+                                                        </td>
+                                                    }
+                                                    @if (item.State != "OPENED")
+                                                    {
+                                                        <td>
+                                                            0:0
+                                                        </td>
+                                                    }
+                                                </tr>
+                                            </table>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td id="@item.IdAuction Deleted"></td>
+                                    </tr>
+                                    <tr>
+
+                                        <td style="color:green;font-weight:bold;font-size:22px;">
+                                            <table>
+                                                <tr>
+                                                    <td>
+                                                        <img src="http://www.pngpix.com/wp-content/uploads/2016/03/Dollar-Cash-Money-PNG-image-500x375.png" style="width:40px;height:40px;" />
+                                                    </td>
+                                                    <td>
+                                                        <div id="@item.IdAuction CurrentPrice"> @Html.DisplayFor(modelItem => item.CurrentPrice)</div>
+                                                    </td>
+                                                </tr>
+                                            </table>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td>
+                                            @if (item.State != "READY" && item.IdWinner != null)
+                                            {
+                                                <table>
+                                                    <tr>
+                                                        <td>
+                                                            <img src="http://www.stickpng.com/assets/images/585e4bf3cb11b227491c339a.png" style="width:40px;height:40px;" />
+                                                        </td>
+                                                        <td style="font-weight:bold;">
+                                                            <div id="@item.IdAuction NextWinner">
+                                                                @Html.DisplayFor(modelItem => item.Winner.UserName)
+                                                            </div>
+
+                                                        </td>
+                                                    </tr>
+                                                </table>
+                                            }
+                                            @if (item.State.Equals("READY") || item.IdWinner == null)
+                                            {
+                                                <table>
+                                                    <tr>
+                                                        <td>
+                                                            <img src="http://www.stickpng.com/assets/images/585e4bf3cb11b227491c339a.png" style="width:40px;height:40px;" />
+                                                        </td>
+                                                        <td style="font-weight:bold;">
+                                                            <div id="@item.IdAuction NextWinner">
+                                                                &nbsp;
+                                                            </div>
+
+                                                        </td>
+                                                    </tr>
+                                                </table>
+                                            }
+                                        </td>
+                                    </tr>
+                                    <tr style="margin-bottom:15px;">
+                                        <td>
+                                            <center>
+                                                @{
+                                                    if (User.Identity.IsAuthenticated && item.State.Equals("OPENED") && DateTime.Compare((DateTime)item.TimeClosing, DateTime.Now) > 0)
+                                                    {
+
+                                                        <div class="bidButton" id="@item.IdAuction Button">
+                                                            @Html.ActionLink("BID NOW", "BidNow", "Auctions", new { id = item.IdAuction, version = @Convert.ToBase64String(item.AuctionRowVersion) }, htmlAttributes: new { @class = "btn btn-warning" })
+                                                        </div>
+
+                                                    }
+                                                    else
+                                                    {
+                                                        if (item.State.Equals("OPENED"))
+                                                        {
+                                                            <div class="bidButton" id="@item.IdAuction Button">
+                                                                @Html.ActionLink("BID NOW", "BidNow", "Auctions", new { id = item.IdAuction }, htmlAttributes: new { @class = "btn btn-secondary", @onclick = "javascript:return false;" })
+                                                            </div>
+                                                        }
+                                                        else
+                                                        {
+                                                            <div id="@item.IdAuction Button">
+                                                                @Html.ActionLink("BID NOW", "BidNow", "Auctions", new { id = item.IdAuction
+                                                                }, htmlAttributes: new { @class = "btn btn-secondary", @onclick = "javascript:return false;" })
+                                                            </div>
+                                                        }
+                                                    }
+                                                }
+                                            </center>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td>
+                                            @if (User.Identity.IsAuthenticated && User.Identity.GetUserId() == item.IdOwner)
+                                            {
+
+                                                @Html.ActionLink("Delete", "Delete", new { id = item.IdAuction })
+
+                                            }
+
+
+                                            | @Html.ActionLink("Details", "Details", new { id = item.IdAuction })
+                                        </td>
+
+                                    </tr>
+                                </table>
+                            </p>
+
+                        </div>
+                    </div>
+                </div>
+            }
+        }
+    </div>
+</div>
+
+<center>
+
+Page @(Model.PageCount < Model.PageNumber ? 0 : Model.PageNumber) of @Model.PageCount
+
+@if (ViewBag.Page == null || ViewBag.Page == "Index")
+{
+
+    @Html.PagedListPager(Model, page => Url.Action("Index",
+            new { page }))
+}
+@if (ViewBag.Page == "WonAuctions")
+{
+    @Html.PagedListPager(Model, page => Url.Action("WonAuctions",
+        new { page }))
+}
+@if (ViewBag.Page == "Search")
+{
+    @Html.PagedListPager(Model, page => Url.Action("Search",
+        new { name = @ViewBag.AuctionName, minPrice = @ViewBag.MinPrice, maxPrice = @ViewBag.MaxPrice, state = @ViewBag.State, page }))
+}
+@if (ViewBag.Page == "MyAuctions")
+{
+    @Html.PagedListPager(Model, page => Url.Action("MyAuctions",
+       new { page }))
+}
+</center>
+
+@section Scripts{
+    <script src="~/Scripts/jquery.signalR-2.3.0.min.js"></script>
+    <script src="~/signalr/hubs"></script>
+    <script>
+        $(function () {
+            var hubko = $.connection.auctionHub;
+            hubko.client.refresh = function (Id, Price, User) {
+
+               var curPrice = document.getElementById(Id + ' CurrentPrice');
+                var nextWinner = document.getElementById(Id + ' NextWinner');
+                curPrice.innerHTML = Price;
+                nextWinner.innerHTML = User;
+
+
+            }
+
+            hubko.client.newversion = function (IdAuction, RowVersion) {
+                var buttonBid = document.getElementById(IdAuction + ' Button');
+                if (buttonBid != null) {
+                    var link = '@Url.Action("BidNow", "Auctions", new { id = "-1", version = "-2"})';
+                    link = link.replace("-2", RowVersion);
+                    link = link.replace("-1", IdAuction);
+                    buttonBid.innerHTML = '<a href="' + link + '" class="btn btn-warning">BID NOW</a>';
+                  
+                }
+            }
+
+                        hubko.client.addauction = function () {
+                            document.getElementById('newAuction').innerHTML = "New opened auctions! Refresh to see!";
+                        }
+
+                        hubko.client.deleteauction = function (IdAuction) {
+                            document.getElementById(IdAuction + ' Deleted').innerHTML = "THIS AUCTION IS DELETED!";
+                            document.getElementById(IdAuction + ' Button').innerHTML = '@Html.ActionLink("BID NOW", "BidNow", "Auctions", null, htmlAttributes: new { @class = "btn btn-secondary", @onclick = "javascript:return false;" })';
+                        }
+
+                        var hub1 = $.connection.tokenHub;
+            hub1.client.tokens = function (UserId1, NumTokens1, UserId2, NumTokens2) {
+                            if (UserId1 != null) {
+                                var curTokens = document.getElementById(UserId1 + ' Tokens');
+                                if (curTokens != null) {
+                                   
+                                    curTokens.innerHTML = NumTokens1;
+                                }
+                            }
+                            if (UserId2 != null) {
+                                var curTokens2 = document.getElementById(UserId2 + ' Tokens');
+                                if (curTokens2 != null) {
+                                    
+                                    curTokens2.innerHTML = NumTokens2;
+                                }
+                            }
+                        }
+
+            $.connection.hub.start();
+        });
+
+        window.onload = function () {
+
+
+
+            function tick() {
+               // alert("Usao");
+                var elements = document.getElementsByClassName('timer');
+                var buttons = document.getElementsByClassName('bidButton');
+                var badges = document.getElementsByClassName('badgeInfo');
+                for (var i = 0; i < elements.length; i++) {
+                    var array = elements[i].innerHTML.split(":");
+                    var minutes = array[0];
+                    var seconds = array[1];
+                    minutes = parseInt(minutes);
+                    seconds = parseInt(seconds);
+                    if (minutes == 0 && (seconds == 1 || seconds == 0)) {
+                        var id = elements[i].getAttribute("id");
+
+                        //alert("DOsao");
+                        $.ajax({
+                            type: "POST",
+                            url: "Auctions/FinishAuctionDetails",
+                            data: "{'id' :'" + id + "'}",
+                            dataType: "json",
+                            contentType: "application/json; charset=utf-8",
+                            success: function () {
+                                //alert("Prosao");
+                            }
+                        });
+
+                        buttons[i].innerHTML = '@Html.ActionLink("BID NOW", "BidNow", "Auctions", null, htmlAttributes: new { @class = "btn btn-secondary", @onclick = "javascript:return false;" })';
+                        elements[i].innerHTML = "0:0";
+                        badges[i].innerHTML = '<span style="width:100%" class="badge badge-pill badge-danger">COMPLETED</span>'
+                    } else {
+                        var time = minutes * 60 + seconds - 1;
+                        minutes = parseInt(time / 60);
+                        seconds = time % 60;
+                        elements[i].innerHTML = minutes + ":" + seconds;
+                    }
+                }
+                window.setTimeout(tick, 1000);
+            }
+
+                window.setTimeout(tick, 1000);
+
+
+
+        }
+    </script>
+
+    <script>
+
+    </script>
+
+}
+
+

@@ -1,0 +1,40 @@
+﻿@using Microsoft.AspNet.Identity
+@using IEPprojekat.Models
+@if (Request.IsAuthenticated)
+{
+    using (Html.BeginForm("LogOff", "Account", FormMethod.Post, new { id = "logoutForm", @class = "navbar-right" }))
+    {
+        @Html.AntiForgeryToken()
+
+        <ul class="nav navbar-nav navbar-right" style="position:absolute; right:40px;">
+
+            <li style="margin-right:20px">
+
+                <img src="https://vignette.wikia.nocookie.net/battlefordreamislandfanfiction/images/6/60/Star_Token.png/revision/latest?cb=20121230012906" style="width:17px;height:17px;" />
+                @{
+                    Auctions db = new Auctions();
+                    User user = db.User.Find(User.Identity.GetUserId());
+                    <div style="display:inline;color:white;font-size:18px;" id="@User.Identity.GetUserId() Tokens">
+                        @user.NumberOfTokens
+                    </div>
+                }
+            </li>
+            <li style="margin-right:20px;">
+                @Html.ActionLink("Hello " + User.Identity.GetUserName() + "!", "UpdateInfo", "Account", routeValues: null, htmlAttributes: new { title = "Manage" })
+            </li>
+            <li><a href="javascript:document.getElementById('logoutForm').submit()">Log off</a></li>
+        </ul>
+                                    }
+                                }
+                                else
+                                {
+    <ul class="nav navbar-nav navbar-right" style="position:absolute; right:40px;">
+        <li style="margin-right:20px;">@Html.ActionLink("Register", "Register", "Account", routeValues: null, htmlAttributes: new { id = "registerLink" })</li>
+        <li>@Html.ActionLink("Log in", "Login", "Account", routeValues: null, htmlAttributes: new { id = "loginLink" })</li>
+    </ul>
+}
+
+
+
+
+                    

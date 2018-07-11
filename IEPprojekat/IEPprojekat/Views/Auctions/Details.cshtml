@@ -1,0 +1,292 @@
+﻿@model IEPprojekat.Models.Auction
+
+@{
+    ViewBag.Title = "Details";
+}
+
+<h2>Details</h2>
+
+<div>
+    <h4>Auction</h4>
+    <hr />
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col-sm-6">
+                <dl class="dl-horizontal">
+                    <dt>
+                        @Html.DisplayNameFor(model => model.Name)
+                    </dt>
+
+                    <dd>
+                        @Html.DisplayFor(model => model.Name)
+                    </dd>
+
+                    <dt>
+                        @Html.DisplayNameFor(model => model.Duration)
+                    </dt>
+
+                    <dd class="Duration" id="@Model.IdAuction" style="font-size:28px;color:red;font-weight:bold;">
+
+                        @{
+                            int minutes, seconds;
+                            if (Model.State == "OPENED" && DateTime.Compare((DateTime)Model.TimeClosing, DateTime.Now) > 0)
+                            {
+                                TimeSpan left = ((DateTime)Model.TimeClosing).Subtract(DateTime.Now);
+                                seconds = (int)left.TotalSeconds;
+                                minutes = (int)seconds / 60;
+                                seconds = seconds % 60;
+                            }
+                            else
+                            {
+                                seconds = 0;
+                                minutes = 0;
+                            }
+
+                        }
+                        @minutes:@seconds
+                    </dd>
+
+                    <dt>
+                        @Html.DisplayNameFor(model => model.StartingPrice)
+                    </dt>
+
+                    <dd>
+                        @Html.DisplayFor(model => model.StartingPrice)
+                    </dd>
+
+                    <dt>
+                        @Html.DisplayNameFor(model => model.CurrentPrice)
+                    </dt>
+
+                    <dd id="CurrentPrice" style="font-size:28px;color:green;font-weight:bold;">
+                        @Html.DisplayFor(model => model.CurrentPrice)
+                    </dd>
+
+                    <dt>
+                        @Html.DisplayNameFor(model => model.Created)
+                    </dt>
+
+                    <dd>
+                        @Html.DisplayFor(model => model.Created)
+                    </dd>
+
+                    <dt>
+                        @Html.DisplayNameFor(model => model.TimeOpening)
+                    </dt>
+
+                    <dd>
+                        @Html.DisplayFor(model => model.TimeOpening)
+                    </dd>
+
+                    <dt>
+                        @Html.DisplayNameFor(model => model.TimeClosing)
+                    </dt>
+
+                    <dd>
+                        @Html.DisplayFor(model => model.TimeClosing)
+                    </dd>
+
+                    <dt>
+                        @Html.DisplayNameFor(model => model.State)
+                    </dt>
+
+                    <dd id="State" style="font-size:28px;color:red;font-weight:bold;">
+                        @Html.DisplayFor(model => model.State)
+                    </dd>
+
+                </dl>
+                @if (!User.Identity.IsAuthenticated || Model.State != "OPENED")
+                {
+                    <div id="Button">
+                        @Html.ActionLink("BID NOW", "BidNow", "Auctions", new { id = Model.IdAuction }, htmlAttributes: new { @class = "btn btn-secondary", @onclick = "javascript:return false;" })
+                    </div>
+                }
+                @if (User.Identity.IsAuthenticated && Model.State == "OPENED")
+                {
+                    <div id="Button">
+                        @Html.ActionLink("BID NOW", "BidNow", "Auctions", new { id = Model.IdAuction, version = @Convert.ToBase64String(Model.AuctionRowVersion) }, htmlAttributes: new { @class = "btn btn-warning" })
+                    </div>
+                }
+                <div id="Winner" style="margin-bottom:15px;margin-top:15px;width:40%;background-color:lightblue;padding:5px;">
+                    @{
+                        if (Model.State == "COMPLETED" && Model.Bid != null)
+                        {
+                            <h3>Winner:</h3>
+                            var winner = Model.Bid.OrderByDescending(m => m.TimeOfBidding).FirstOrDefault();
+                            if (winner != null)
+                            {
+                                @winner.User.Email;
+                            }
+                        }
+                    }
+                </div>
+            </div>
+            <div class="col-sm-6">
+                @{
+                    string imgDataUrl = "";
+                    if (Model.Image != null)
+                    {
+                        string imreBase64Data = Convert.ToBase64String(Model.Image);
+                        imgDataUrl = string.Format("data:image/png;base64,{0}", imreBase64Data);
+                    }
+                }
+                <img src="@imgDataUrl" style="width:70%;" class="card-img-top" />
+                <br />
+                <div id="Deleted" style="font-size:20px;font-weight:bold;">
+                    &nbsp;
+                </div>
+                <h3>All bids so far</h3>
+                <p id="Bids">
+                    @foreach (var bid in Model.Bid.OrderByDescending(b => b.TimeOfBidding).ToList())
+                    {
+                       <p>@bid.User.Email</p>
+                        
+                    }
+                </p>
+               
+            </div>
+            </div>
+        </div>
+</div>
+<p>
+
+    @Html.ActionLink("Back to List", "Index")
+</p>
+
+
+@section Scripts{
+    <script src="~/Scripts/jquery.signalR-2.3.0.min.js"></script>
+    <script src="~/signalr/hubs"></script>
+    <script>
+        $(function () {
+            var hubko = $.connection.auctionHub;
+            hubko.client.refresh = function (Id, Price, User) {
+
+               var curPrice = document.getElementById('CurrentPrice');
+              //  var nextWinner = document.getElementById(Id + ' NextWinner');
+                curPrice.innerHTML = Price;
+                //nextWinner.innerHTML = User;
+                //location.reload();
+
+            }
+
+             hubko.client.newversion = function (IdAuction, RowVersion) {
+                 var buttonBid = document.getElementById('Button');
+                 var timer = document.getElementsByClassName("Duration");
+                 timer = timer[0];
+                 var id = timer.getAttribute("id");
+                if (IdAuction == id) {
+                    var link = '@Url.Action("BidNow", "Auctions", new { id = "-1", version = "-2"})';
+                   link = link.replace("-2", RowVersion);
+                  link = link.replace("-1", IdAuction);
+                    buttonBid.innerHTML = '<a href="' + link + '" class="btn btn-warning">BID NOW</a>';
+                  
+                }
+            }
+
+
+            hubko.client.bidding = function (User) {
+                //alert("Dosao");
+                var list = document.getElementById('Bids');
+                var pp = document.createElement("P");
+                var text = document.createTextNode(User);
+                pp.appendChild(text);
+                list.appendChild(pp);
+               // $(list).append(User+"<br />");
+            }
+
+            hubko.client.finished = function (IdAuction, User) {
+                var timer = document.getElementsByClassName("Duration");
+                timer = timer[0];
+                var id = timer.getAttribute("id");
+                if (id == IdAuction) {
+                    var winner = document.getElementById('Winner');
+                    winner.innerHTML = "<h3>Winner:</h3>" + User;
+                }
+            }
+
+            hubko.client.deleteauction = function (IdAuction) {
+                var timer = document.getElementsByClassName("Duration");
+                timer = timer[0];
+                var id = timer.getAttribute("id");
+                if (id == IdAuction) {
+                    var button = document.getElementById('Button');
+                    button.innerHTML = '@Html.ActionLink("BID NOW", "BidNow", "Auctions", new { id = Model.IdAuction }, htmlAttributes: new { @class = "btn btn-secondary", @onclick = "javascript:return false;" })';
+                    var deleted = document.getElementById('Deleted');
+                    deleted.innerHTML = "This auction is deleted!";
+                }
+            }
+
+            var hub1 = $.connection.tokenHub;
+            hub1.client.tokens = function (UserId1, NumTokens1, UserId2, NumTokens2) {
+                if (UserId1 != null) {
+                    var curTokens = document.getElementById(UserId1 + ' Tokens');
+                    if (curTokens != null) {
+                        //alert(NumTokens1);
+                        curTokens.innerHTML = NumTokens1;
+                    }
+                }
+                if (UserId2 != null) {
+                    var curTokens2 = document.getElementById(UserId2 + ' Tokens');
+                    if (curTokens2 != null) {
+                        //alert(NumTokens2);
+                        curTokens2.innerHTML = NumTokens2;
+                    }
+                }
+            }
+            $.connection.hub.start();
+      
+        });
+    </script>
+    <script>
+         window.onload = function () {
+
+
+
+             function tick() {
+                 var stateInfo = document.getElementById('State');
+                 var timer = document.getElementsByClassName('Duration');
+                 var button = document.getElementById('Button');
+                 timer = timer[0];
+                    var array = timer.innerHTML.split(":");
+                    var minutes = array[0];
+                    var seconds = array[1];
+                    minutes = parseInt(minutes);
+                    seconds = parseInt(seconds);
+                    if (minutes == 0 && (seconds == 1 || seconds == 0)) {
+                        var id = timer.getAttribute("id");
+                       // alert(id);
+                      
+                        $.ajax({
+                            type: "POST",
+                            url: '@Url.Action("FinishAuction", "Auctions", new { id = Model.IdAuction})',
+                           // data: "{'id' :'" + id + "'}",
+                            dataType: "json",
+                            contentType: "application/json; charset=utf-8",
+                            success: function () {
+                                //alert("Prosao");
+                            }
+                        });
+                        
+                       
+                        timer.innerHTML = "0:0";
+                        stateInfo.innerHTML = "COMPLETED";
+                        button.innerHTML = '  @Html.ActionLink("BID NOW", "BidNow", "Auctions", new { id = Model.IdAuction }, htmlAttributes: new { @class = "btn btn-secondary", @onclick = "javascript:return false;" })';
+                    } else {
+                        var time = minutes * 60 + seconds - 1;
+                        minutes = parseInt(time / 60);
+                        seconds = time % 60;
+                        timer.innerHTML = minutes + ":" + seconds;
+                    }
+                
+                window.setTimeout(tick, 1000);
+            }
+
+                window.setTimeout(tick, 1000);
+
+
+
+        }
+    </script>
+
+}

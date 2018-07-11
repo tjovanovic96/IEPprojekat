@@ -1,0 +1,52 @@
+﻿
+@{
+    ViewBag.Title = "OrderTokens";
+}
+
+<h2>Order tokens</h2>
+
+
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-sm-4">
+            <div style="width:95%">
+                <img src="http://www.repudoc.com/wp-content/uploads/2017/02/silver-package.png" style="width:100%" />
+                <center>
+                    <h3>Silver Pack</h3>
+                    Price: @ViewBag.SilverPrice @ViewBag.Currency
+                    <br />
+                    Number of tokens: @ViewBag.SilverPack
+                    <br />
+                    @Html.ActionLink("Order now", "OrderNow", "Orders", new { id = 1}, htmlAttributes: new { @class = "btn btn-outline-secondary" })
+                </center>
+            </div>
+        </div>
+        <div class="col-sm-4">
+            <div style="width:95%">
+                <img src="http://www.repudoc.com/wp-content/uploads/2017/02/gold-package.png" style="width:100%" />
+                <center>
+                    <h3>Gold Pack</h3>
+                    Price: @ViewBag.GoldPrice @ViewBag.Currency
+                    <br />
+                    Number of tokens: @ViewBag.GoldPack
+                    <br />
+                    @Html.ActionLink("Order now", "OrderNow", "Orders", new { id = 2 }, htmlAttributes: new { @class = "btn btn-outline-secondary" })
+                </center>
+            </div>
+        </div>
+        <div class="col-sm-4">
+            <div style="width:95%">
+                <img src="http://www.repudoc.com/wp-content/uploads/2017/02/platinum-package.png" style="width:100%" />
+                <center>
+                    <h3>Platinum Pack</h3>
+                    Price: @ViewBag.PlatinumPrice @ViewBag.Currency
+                    <br />
+                    Number of tokens: @ViewBag.PlatinumPack
+                    <br />
+                    @Html.ActionLink("Order now", "OrderNow", "Orders", new { id = 3 }, htmlAttributes: new { @class = "btn btn-outline-secondary" })
+                </center>
+            </div>
+        </div>
+    </div>
+</div>
+

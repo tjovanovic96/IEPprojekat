@@ -1,0 +1,25 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 15
+VisualStudioVersion = 15.0.27703.2035
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "IEPprojekat", "IEPprojekat\IEPprojekat.csproj", "{FB85C17A-7A95-42FA-816B-B5B4A6C208FE}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{FB85C17A-7A95-42FA-816B-B5B4A6C208FE}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{FB85C17A-7A95-42FA-816B-B5B4A6C208FE}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{FB85C17A-7A95-42FA-816B-B5B4A6C208FE}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{FB85C17A-7A95-42FA-816B-B5B4A6C208FE}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {44FB76D6-A448-49D6-A7F2-96803BB862BD}
+	EndGlobalSection
+EndGlobal

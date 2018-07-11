@@ -1,0 +1,102 @@
+﻿@model PagedList.IPagedList<IEPprojekat.Models.Auction>
+@using PagedList.Mvc;
+<link href="~/Content/PagedList.css" rel="stylesheet" type="text/css" />
+@using Microsoft.AspNet.Identity
+@{
+    ViewBag.Title = "ReadyAuctions";
+}
+
+<h2>Ready auctions</h2>
+
+<div class="container-fluid">
+    <div class="row">
+        @foreach (var item in Model)
+        {
+
+
+            <div class="col-sm-4">
+                <div class="card" style="width:90%;">
+                    @{
+                        string imgDataUrl = "";
+                        if (item.Image != null)
+                        {
+                            string imreBase64Data = Convert.ToBase64String(item.Image);
+                            imgDataUrl = string.Format("data:image/png;base64,{0}", imreBase64Data);
+                        }
+                    }
+                    <img src="@imgDataUrl" style="width:100%;height:160px" class="card-img-top" />
+                    <div class="card-body">
+                        <h5 class="card-title" style="align-content:center;"> @Html.DisplayFor(modelItem => item.Name)</h5>
+                        <p class="card-text">
+                            <table style="width:100%">
+                                <tr style="width:100%">
+                                    <td style="width:100%">
+                                        @if (item.State == "READY")
+                                        {
+                                            <span style="width:100%" class="badge badge-pill badge-info">READY</span>
+                                        }
+                                        @if (item.State == "OPENED")
+                                        {
+                                            <span style="width:100%" class="badge badge-pill badge-success">OPENED</span>
+                                        }
+                                        @if (item.State == "COMPLETED")
+                                        {
+                                            <span style="width:100%" class="badge badge-pill badge-danger">COMPLETED</span>
+                                        }
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>
+
+
+                                        <img src="http://cdn.onlinewebfonts.com/svg/img_304848.png" style="width:20px;height:20px;" />
+
+                                        @Html.DisplayFor(modelItem => item.Duration)
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td></td>
+                                </tr>
+                                <tr>
+
+                                    <td style="color:green;">
+                                        <img src="http://www.pngpix.com/wp-content/uploads/2016/03/Dollar-Cash-Money-PNG-image-500x375.png" style="width:20px;height:20px;" />
+                                        @Html.DisplayFor(modelItem => item.CurrentPrice)
+                                    </td>
+                                </tr>
+
+                                <tr>
+                                    <td>
+                                        @if (User.Identity.IsAuthenticated && User.Identity.GetUserId() == item.IdOwner)
+                                        {
+
+                                            @Html.ActionLink("Delete", "Delete", new { id = item.IdAuction })
+
+                                        }
+                                        @Html.ActionLink("Details", "Details", new { id = item.IdAuction })
+                                    </td>
+
+                                </tr>
+                                <tr>
+                                    <td>
+                                        @Html.ActionLink("START AUCTION", "StartAuction", "Auctions", new { id = item.IdAuction }, htmlAttributes: new { @class = "btn btn-outline-secondary btn-sm" })
+                                    </td>
+                                </tr>
+                            </table>
+                        </p>
+
+                    </div>
+                </div>
+            </div>
+
+        }
+    </div>
+</div>
+
+<center>
+
+Page @(Model.PageCount < Model.PageNumber ? 0 : Model.PageNumber) of @Model.PageCount
+@Html.PagedListPager(Model, page => Url.Action("ReadyAuctions",
+            new { page }))
+
+</center>

@@ -1,0 +1,61 @@
+﻿@model PagedList.IPagedList<IEPprojekat.Models.Order>
+@using PagedList.Mvc
+<link href="~/Content/PagedList.css" rel="stylesheet" type="text/css" />
+
+@{
+    ViewBag.Title = "Index";
+}
+
+<h2>Submitted orders</h2>
+
+<p>
+    @Html.ActionLink("Create New", "Create")
+</p>
+<table class="table">
+    <tr>
+
+        <th>
+            Number of tokens:
+        </th>
+        <th>
+            Price in current currency;
+        </th>
+        <th>
+            Current state:
+        </th>
+        <th>
+            User:
+        </th>
+    </tr>
+
+    @foreach (var item in Model)
+    {
+        <tr>
+
+            <td>
+                @Html.DisplayFor(modelItem => item.NumberOfTokens)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.RealPrice)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.CurrentState)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.User.Email)
+            </td>
+            <td>
+                @Html.ActionLink("Accept", "CentiliPayment", new { clientid = item.IdOrder, status = "ok" })
+                |
+                @Html.ActionLink("Cancel", "CentiliPayment", new { clientid = item.IdOrder, status = "failed" })
+            </td>
+        </tr>
+    }
+
+</table>
+
+Page @(Model.PageCount < Model.PageNumber ? 0 : Model.PageNumber) of @Model.PageCount
+
+@Html.PagedListPager(Model, page => Url.Action("IndexAdmin",
+            new { page }))
+
