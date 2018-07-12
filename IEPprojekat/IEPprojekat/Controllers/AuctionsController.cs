@@ -424,6 +424,7 @@ namespace IEPprojekat.Controllers
                     db.Entry(auction).OriginalValues["AuctionRowVersion"] = version;
 
                     await db.SaveChangesAsync();
+                    trans.Commit();
                     var hubContext = GlobalHost.ConnectionManager.GetHubContext<AuctionHub>();
                     hubContext.Clients.All.refresh(auction.IdAuction, auction.CurrentPrice, db.User.Find(idUser).Email);
                     hubContext.Clients.All.bidding(db.User.Find(idUser).Email);
@@ -439,7 +440,7 @@ namespace IEPprojekat.Controllers
                         int number = db.User.Find(idLastUser).NumberOfTokens;
                         hubC.Clients.All.tokens(idLastUser, number, user.Id, user.NumberOfTokens);
                     }
-                    trans.Commit();
+                   
                     return RedirectToAction("Index");
 
                 } catch (Exception ex)
