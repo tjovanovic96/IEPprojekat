@@ -20,7 +20,7 @@ namespace IEPprojekat.Controllers
         private Auctions db = new Auctions();
         private static readonly log4net.ILog log = log4net.LogManager.GetLogger(typeof(OrdersController));
 
-        
+
 
 
         [System.Web.Mvc.Authorize(Roles = "Administrator, RegularUser")]
@@ -43,7 +43,7 @@ namespace IEPprojekat.Controllers
 
             var order = from Order in db.Order select Order;
             string id = User.Identity.GetUserId();
-            order = order.Where(o => o.CurrentState.Equals("SUBMITTED")).OrderBy(o=>o.NumberOfTokens);
+            order = order.Where(o => o.CurrentState.Equals("SUBMITTED")).OrderBy(o => o.NumberOfTokens);
             int pageSize = (int)db.InformationsForAdministrator.First().ItemsPerPage;
             int pageNumber = (page ?? 1);
             return View(order.ToPagedList(pageNumber, pageSize));
@@ -68,11 +68,11 @@ namespace IEPprojekat.Controllers
             return View();
         }
 
-        
 
-       
 
-       
+
+
+
         protected override void Dispose(bool disposing)
         {
             if (disposing)
@@ -119,11 +119,13 @@ namespace IEPprojekat.Controllers
             if (id == 1)
             {
                 numberOfTokens = (int)db.InformationsForAdministrator.First().SilverPack;
-            } else if (id == 2)
+            }
+            else if (id == 2)
             {
                 numberOfTokens = (int)db.InformationsForAdministrator.First().GoldPack;
 
-            } else
+            }
+            else
             {
                 numberOfTokens = (int)db.InformationsForAdministrator.First().PlatinumPack;
             }
@@ -153,44 +155,60 @@ namespace IEPprojekat.Controllers
         public ActionResult CentiliPayment(Guid clientid, string status)
         {
             log.Info("Action /Orders/CentiliPayment has been fired.");
-            
-            Order order = db.Order.Find(clientid);
-            if (order == null)
+            using (var trans = db.Database.BeginTransaction(IsolationLevel.Serializable))
             {
-                return View("ErrorPage");
-            }
-            if (order.CurrentState != "SUBMITTED")
-            {
-                return View("OrderAlreadyProcessed");
-            }
-            if (status == "canceled" || status == "failed")
-            {
-                order.CurrentState = "CANCELED"; 
-            }
-            else
-            {
-                order.CurrentState = "COMPLETED"; 
-                User user = db.User.Find(order.IdUser);
-                if (user == null)
+                try
                 {
-                    return View("ErrorPage");
+                    Order order = db.Order.Find(clientid);
+                    if (order == null)
+                    {
+                        return View("ErrorPage");
+                    }
+                    if (order.CurrentState != "SUBMITTED")
+                    {
+                        return View("OrderAlreadyProcessed");
+                    }
+                    if (status == "canceled" || status == "failed")
+                    {
+                        order.CurrentState = "CANCELED";
+                    }
+                    else
+                    {
+                        order.CurrentState = "COMPLETED";
+                        User user = db.User.Find(order.IdUser);
+                        if (user == null)
+                        {
+                            return View("ErrorPage");
+                        }
+                        user.NumberOfTokens = (int)user.NumberOfTokens + (int)order.NumberOfTokens;
+                        db.Entry(user).State = EntityState.Modified;
+                        db.SaveChanges();
+                        Mailer.sendMail(user.Email, "Centili payment", "Your payment was successful.");
+
+
+                    }
+                    db.Entry(order).State = EntityState.Modified;
+                    
+                    var hubC = GlobalHost.ConnectionManager.GetHubContext<TokenHub>();
+                    User u = db.User.Find(order.IdUser);
+                    hubC.Clients.All.tokens(null, null, order.IdUser, u.NumberOfTokens);
+                    db.SaveChanges();
+                    trans.Commit();
+
+                    return new HttpStatusCodeResult(200);
+
                 }
-                user.NumberOfTokens = (int)user.NumberOfTokens + (int)order.NumberOfTokens;
-                db.Entry(user).State = EntityState.Modified;
-                db.SaveChanges();
-                Mailer.sendMail(user.Email, "Centili payment", "Your payment was successful.");
-
-
+                catch (Exception ex)
+                {
+                    trans.Rollback();
+                    log.Error("Centili not successful!");
+                    return new HttpStatusCodeResult(200);
+                }
             }
-            db.Entry(order).State = EntityState.Modified;
-            db.SaveChanges();
-            var hubC = GlobalHost.ConnectionManager.GetHubContext<TokenHub>();
-            User u = db.User.Find(order.IdUser);
-             hubC.Clients.All.tokens(null, null, order.IdUser, u.NumberOfTokens);
-
-
-            return new HttpStatusCodeResult(200);
-
         }
+
+
+
     }
 }
+

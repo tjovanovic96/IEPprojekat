@@ -351,108 +351,125 @@ namespace IEPprojekat.Controllers
             return;
         }
 
+        public void returnTokens(Auction auction)
+        {
+            if (auction.IdWinner == null) return;
+            User user = db.User.Find(auction.IdWinner);
+            if (user == null) return;
+            user.NumberOfTokens += (int)auction.CurrentPrice;
+        }
+
+        public bool checkNumberOfTokens(Auction auction, User user)
+        {
+            if (((auction.IdWinner == null || auction.IdWinner != user.Id) && user.NumberOfTokens <= auction.CurrentPrice) || (auction.IdWinner != null && auction.IdWinner == user.Id && user.NumberOfTokens < 1))
+            {
+                return false;
+            }
+            return true;
+        }
+
+        public void updateAuctionAndBid(Auction auction)
+        {
+            auction.CurrentPrice++;
+            auction.IdWinner = User.Identity.GetUserId();
+            Bid bid = new Bid();
+            bid.IdAuction = (Guid)auction.IdAuction;
+            bid.IdUser = User.Identity.GetUserId();
+            bid.TimeOfBidding = DateTime.Now;
+            bid.TokensGiven = auction.CurrentPrice + 1;
+            db.Bid.Add(bid);
+
+        }
+
+        public void reserveTokens(Auction auction)
+        {
+            User user = db.User.Find(User.Identity.GetUserId());
+            user.NumberOfTokens -= (int)auction.CurrentPrice;
+        }
+
         [System.Web.Mvc.Authorize(Roles ="Administrator, RegularUser")]
         public async Task<ActionResult> BidNow(Guid? id, byte[] version)
         {
             log.Info("Action /Auction/BidNow has been fired.");
-            if (id == null)
+           
+
+            using (var trans = db.Database.BeginTransaction(IsolationLevel.Serializable))
             {
-                return View("ErrorPage");
+                try
+                {
+                    if (id == null || version == null)
+                    {
+                        throw new Exception();
+                    }
+                    Auction auction = db.Auction.Find(id);
+                    if (auction == null)
+                    {
+                        throw new Exception();
+                    }
+                    if (auction.State.Equals("READY") || auction.State.Equals("COMPLETED"))
+                    {
+                        throw new Exception();
+                    }
+                    User lastUser = auction.Winner;
+                    string idLastUser = auction.IdWinner;
+                    string idUser = User.Identity.GetUserId();
+                    User user = db.User.Find(idUser);
+                    if (!checkNumberOfTokens(auction, user))
+                    {
+                        throw new Exception();
+                    }
+                    returnTokens(auction);
+                    updateAuctionAndBid(auction);
+                    reserveTokens(auction);
+                    db.Entry(auction).OriginalValues["AuctionRowVersion"] = version;
+
+                    await db.SaveChangesAsync();
+                    var hubContext = GlobalHost.ConnectionManager.GetHubContext<AuctionHub>();
+                    hubContext.Clients.All.refresh(auction.IdAuction, auction.CurrentPrice, db.User.Find(idUser).Email);
+                    hubContext.Clients.All.bidding(db.User.Find(idUser).Email);
+                    string v = @Convert.ToBase64String(auction.AuctionRowVersion);
+                    hubContext.Clients.All.newversion(auction.IdAuction, v);
+                    var hubC = GlobalHost.ConnectionManager.GetHubContext<TokenHub>();
+                    if (lastUser == null)
+                    {
+                        hubC.Clients.All.tokens(null, null, user.Id, user.NumberOfTokens);
+                    }
+                    else
+                    {
+                        int number = db.User.Find(idLastUser).NumberOfTokens;
+                        hubC.Clients.All.tokens(idLastUser, number, user.Id, user.NumberOfTokens);
+                    }
+                    trans.Commit();
+                    return RedirectToAction("Index");
+
+                } catch (Exception ex)
+                {
+                    trans.Rollback();
+                    log.Error("Bid is not successful!");
+                    return RedirectToAction("Index");
+                }
+                
             }
-            if (version == null)
-            {
-                return View("ErrorPage");
-            }
-            Auction auction = db.Auction.Find(id);
-            if (auction == null)
-            {
-                return View("ErrorPage");
-            }
-            if (auction.State.Equals("READY") || auction.State.Equals("COMPLETED"))
-            {
-                return RedirectToAction("Index");
-            }
-            
-            string idUser = User.Identity.GetUserId();
+           
+           
+           
           
-                User user = db.User.Find(idUser);
-            if (((auction.IdWinner == null || auction.IdWinner != idUser) && user.NumberOfTokens <= auction.CurrentPrice) || (auction.IdWinner!=null && auction.IdWinner == idUser && user.NumberOfTokens < 1))
-            {
-                return RedirectToAction("Index");
-            }
-                Bid bid = new Bid();
-            bid.IdAuction = (Guid) id;
-            bid.IdUser = idUser;
-            bid.TimeOfBidding = DateTime.Now;
-            bid.TokensGiven = auction.CurrentPrice + 1;
-            db.Bid.Add(bid);
-            db.SaveChanges();
-            string idLastWinner = auction.IdWinner;
-            if (idLastWinner != null && idLastWinner != user.Id)
-            {
-                User lastWinner = db.User.Find(idLastWinner);
-                int number = (int)lastWinner.NumberOfTokens + (int)auction.CurrentPrice;
-                lastWinner.NumberOfTokens +=(int) auction.CurrentPrice;
-                
-               
-                
-               
-            }
-            if ((user.NumberOfTokens <= auction.CurrentPrice) || (idLastWinner != null && user.Id == idLastWinner && user.NumberOfTokens < 1))
-            {
-                return RedirectToAction("Index");
-            }
-            if (idLastWinner == null || idLastWinner != user.Id)
-            {
-                user.NumberOfTokens -= (int)auction.CurrentPrice + 1;
-            } else
-            {
-                user.NumberOfTokens--;
-            }
+            
+           
+            
           
            
-            auction.CurrentPrice++;
-            auction.IdWinner = idUser;
+            
          
 
-            bool flag = true;
-            try{
-                db.Entry(auction).OriginalValues["AuctionRowVersion"] = version;
-                
-                await db.SaveChangesAsync();
-            }
-            catch (DbUpdateConcurrencyException ex)
-            {
-                flag = false;
-            }
+           
+           
 
-            if(!flag)
-            {
-                ViewBag.ErrorBid = "Your bid failed! Please try again!";
-                var auctions = from Auction in db.Auction select Auction;
-                auctions = auctions.OrderByDescending(a => a.TimeOpening);
-                int pageNumber = 1;
-                int pageSize = (int)db.InformationsForAdministrator.First().ItemsPerPage;
-                ViewBag.Page = "Index";
-                return View("Index", auctions.ToPagedList(pageNumber, pageSize));
-            }
+           
 
-            var hubContext = GlobalHost.ConnectionManager.GetHubContext<AuctionHub>();
-            hubContext.Clients.All.refresh(auction.IdAuction, auction.CurrentPrice, db.User.Find(idUser).Email);
-            hubContext.Clients.All.bidding(db.User.Find(idUser).Email);
-            string v = @Convert.ToBase64String(auction.AuctionRowVersion);
-            hubContext.Clients.All.newversion(auction.IdAuction, v);
-            var hubC = GlobalHost.ConnectionManager.GetHubContext<TokenHub>();
-            if (idLastWinner == null)
-            {
-                hubC.Clients.All.tokens(null, null, user.Id, user.NumberOfTokens);
-            }
-            else
-            {
-                int number = db.User.Find(idLastWinner).NumberOfTokens;
-                hubC.Clients.All.tokens(idLastWinner, number, user.Id, user.NumberOfTokens);
-            }
-            return RedirectToAction("Index");
+            
+            
+            
         }
 
         
