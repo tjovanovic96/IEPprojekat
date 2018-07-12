@@ -1,12 +1,12 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <parameters>
   <parameter name="AuctionsDB-Web.config Connection String" description="AuctionsDB Connection String used in web.config by the application to access the database." defaultValue="data source=jt150008d.database.windows.net;initial catalog=Aukcija;user id=jt150008d;password=sifra1!Sifra;MultipleActiveResultSets=True;App=EntityFramework" tags="SqlConnectionString">
-    <parameterEntry kind="XmlFile" scope="C:\\Users\\user\\Desktop\\Treca\ godina\\IEP\\IEPprojekat\\IEPprojekat\\obj\\Release\\Package\\PackageTmp\\Web\.config$" match="/configuration/connectionStrings/add[@name='AuctionsDB']/@connectionString" />
+    <parameterEntry kind="XmlFile" scope="C:\\Users\\user\\Documents\\GitHub\\IEPprojekat\\IEPprojekat\\IEPprojekat\\obj\\Release\\Package\\PackageTmp\\Web\.config$" match="/configuration/connectionStrings/add[@name='AuctionsDB']/@connectionString" />
   </parameter>
   <parameter name="Auctions-Web.config Connection String" description="Auctions Connection String used in web.config by the application to access the database." defaultValue="data source=jt150008d.database.windows.net;initial catalog=Aukcija;user id=jt150008d;password=sifra1!Sifra;multipleactiveresultsets=True;application name=EntityFramework" tags="SqlConnectionString">
-    <parameterEntry kind="XmlFile" scope="C:\\Users\\user\\Desktop\\Treca\ godina\\IEP\\IEPprojekat\\IEPprojekat\\obj\\Release\\Package\\PackageTmp\\Web\.config$" match="/configuration/connectionStrings/add[@name='Auctions']/@connectionString" />
+    <parameterEntry kind="XmlFile" scope="C:\\Users\\user\\Documents\\GitHub\\IEPprojekat\\IEPprojekat\\IEPprojekat\\obj\\Release\\Package\\PackageTmp\\Web\.config$" match="/configuration/connectionStrings/add[@name='Auctions']/@connectionString" />
   </parameter>
   <parameter name="Auctions1-Web.config Connection String" description="Auctions1 Connection String used in web.config by the application to access the database." defaultValue="data source=jt150008d.database.windows.net;initial catalog=Aukcija;user id=jt150008d;password=sifra1!Sifra;multipleactiveresultsets=True;application name=EntityFramework" tags="SqlConnectionString">
-    <parameterEntry kind="XmlFile" scope="C:\\Users\\user\\Desktop\\Treca\ godina\\IEP\\IEPprojekat\\IEPprojekat\\obj\\Release\\Package\\PackageTmp\\Web\.config$" match="/configuration/connectionStrings/add[@name='Auctions1']/@connectionString" />
+    <parameterEntry kind="XmlFile" scope="C:\\Users\\user\\Documents\\GitHub\\IEPprojekat\\IEPprojekat\\IEPprojekat\\obj\\Release\\Package\\PackageTmp\\Web\.config$" match="/configuration/connectionStrings/add[@name='Auctions1']/@connectionString" />
   </parameter>
 </parameters>
